@@ -13,9 +13,19 @@ def build_index(vectors):
     return index
 
 
-def search_index(index, query_vector, top_k: int = 3):
+def search_index(index, chunks, query_vector, top_k: int = 3):
     query_vector = np.asarray(query_vector).astype("float32")
 
     distances, indices = index.search(query_vector, top_k)
 
-    return distances, indices
+    results = []
+
+    for distance, index_position in zip(distances[0], indices[0]):
+        chunk = chunks[index_position]
+
+        results.append({
+            "chunk": chunk,
+            "distance": float(distance),
+        })
+
+    return results

@@ -3,5 +3,7 @@ __pycache__/
 *.pyc
 
 data/*.pdf
+data/papers/
+data/index/
 
 .env
