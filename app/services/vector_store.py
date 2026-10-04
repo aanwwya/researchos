@@ -23,8 +23,19 @@ def search_index(index, chunks, query_vector, top_k: int = 3):
     for distance, index_position in zip(distances[0], indices[0]):
         chunk = chunks[index_position]
 
+        if hasattr(chunk, "id"):
+            chunk_id = chunk.id
+            paper_id = chunk.paper_id
+            text = chunk.text
+        else:
+            chunk_id = chunk["id"]
+            paper_id = chunk["paper_id"]
+            text = chunk["text"]
+
         results.append({
-            "chunk": chunk,
+            "paper_id": paper_id,
+            "chunk_id": chunk_id,
+            "text": text,
             "distance": float(distance),
         })
 

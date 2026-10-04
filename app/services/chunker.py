@@ -4,8 +4,8 @@ from app.models.chunk import Chunk
 def chunk_text(
     text: str,
     paper_id: str,
-    chunk_size: int = 1000,
-    overlap: int = 200,
+    chunk_size: int = 500,
+    overlap: int = 100,
 ) -> list[Chunk]:
     words = text.split()
 
