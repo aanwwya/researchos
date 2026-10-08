@@ -1,6 +1,7 @@
 from app.services.embedder import embed_query
 from app.services.vector_store import search_index
 from app.services.index_manager import load_index
+from app.services.reranker import rerank
 
 
 def is_reference_heavy(text: str) -> bool:
@@ -43,4 +44,9 @@ def retrieve(query: str, top_k: int = 3):
         if not is_reference_heavy(result["text"])
     ]
 
-    return filtered_results[:top_k]
+    reranked_results = rerank(
+        query,
+        filtered_results,
+    )
+
+    return reranked_results[:top_k]

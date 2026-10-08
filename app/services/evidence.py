@@ -6,7 +6,7 @@ def build_evidence(results):
             {
                 "paper_id": result["paper_id"],
                 "chunk_id": result["chunk_id"],
-                "distance": result["distance"],
+                "rerank_score": result["rerank_score"],
                 "text": result["text"],
             }
         )

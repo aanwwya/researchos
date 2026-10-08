@@ -18,13 +18,32 @@ def ingest_papers(query: str, limit: int = 5):
 
     all_chunks = []
     ingested_papers = []
+    skipped_papers = []
 
     for paper in papers:
+        paper_id = paper.id.split("/")[-1]
+
         if not paper.pdf_url:
+            skipped_papers.append(
+                {
+                    "paper_id": paper_id,
+                    "title": paper.title,
+                    "reason": "no_pdf_url",
+                }
+            )
             continue
 
-        paper_id = paper.id.split("/")[-1]
         pdf_path = DATA_DIR / f"{paper_id}.pdf"
+
+        if pdf_path.exists():
+            skipped_papers.append(
+                {
+                    "paper_id": paper_id,
+                    "title": paper.title,
+                    "reason": "already_ingested",
+                }
+            )
+            continue
 
         try:
             downloaded = download_pdf(
@@ -33,9 +52,26 @@ def ingest_papers(query: str, limit: int = 5):
             )
 
             if not downloaded:
+                skipped_papers.append(
+                    {
+                        "paper_id": paper_id,
+                        "title": paper.title,
+                        "reason": "downloaded_file_is_not_pdf",
+                    }
+                )
                 continue
 
             text = extract_text(str(pdf_path))
+
+            if not text.strip():
+                skipped_papers.append(
+                    {
+                        "paper_id": paper_id,
+                        "title": paper.title,
+                        "reason": "pdf_has_no_extractable_text",
+                    }
+                )
+                continue
 
             chunks = chunk_text(
                 text,
@@ -46,26 +82,26 @@ def ingest_papers(query: str, limit: int = 5):
             ingested_papers.append(paper)
 
         except Exception as error:
-            print(
-                f"Failed to ingest {paper.title}: {error}"
+            skipped_papers.append(
+                {
+                    "paper_id": paper_id,
+                    "title": paper.title,
+                    "reason": str(error),
+                }
             )
 
     if not all_chunks:
-        return {
-            "papers": [],
-            "chunks": [],
-            "index": None,
-        }
+        from app.services.index_manager import load_index
 
-    index = build_paper_index(all_chunks)
-
-    save_index(
-        index,
-        all_chunks,
-    )
+    try:
+        index, chunks = load_index()
+    except FileNotFoundError:
+        index = None
+        chunks = []
 
     return {
-        "papers": ingested_papers,
-        "chunks": all_chunks,
+        "papers": [],
+        "chunks": chunks,
         "index": index,
+        "skipped_papers": skipped_papers,
     }
